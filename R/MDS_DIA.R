@@ -42,8 +42,7 @@ MDS_DIA <- function(data, transformation = c("log2", "none"), tit = ""){
   }
   else{
     m <- limma::plotMDS(m, plot = FALSE)
-    m <- as.data.frame(m$cmdscale.out)
-    colnames(m) <- c("x", "y")
+    m <- data.frame(x = m$x, y = m$y, row.names = rownames(m$distance.matrix.squared))
     m$name <- rownames(m)
 
 
