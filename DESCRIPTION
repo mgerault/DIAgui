@@ -32,7 +32,8 @@ Imports:
     stringr,
     Rcpp,
     RcppEigen,
-    iq
+    iq,
+    DT
 Suggests: limma
 LinkingTo: 
     Rcpp,
