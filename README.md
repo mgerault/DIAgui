@@ -31,7 +31,7 @@ You can now install DIAgui from github :
 
 You can now load it and run the app with this commands : 
 
-*> library(mineCETSAapp)*
+*> library(DIAgui)*
 
 *> runDIAgui()*
 
