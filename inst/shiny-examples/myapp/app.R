@@ -551,7 +551,7 @@ server <- function(input, output, session){
         paste0("Precursors_dia_", Sys.Date(), ".xlsx")
       },
       content = function(file){
-        openxlsx::write.xlsx(precu_ev$x, file, rowNames = FALSE)
+        write.csv(precu_ev$x, file, row.names = FALSE)
       }
     )
 
@@ -605,7 +605,7 @@ server <- function(input, output, session){
         paste0("Peptides_dia_", Sys.Date(), ".xlsx")
       },
       content = function(file){
-        openxlsx::write.xlsx(pep_ev$x, file, rowNames = FALSE)
+        write.csv(pep_ev$x, file, row.names = FALSE)
       }
     )
 
@@ -671,7 +671,7 @@ server <- function(input, output, session){
         paste0("PeptidesMaxLFQ_dia_", Sys.Date(), ".xlsx")
       },
       content = function(file){
-        openxlsx::write.xlsx(peplfq_ev$x, file, rowNames = FALSE)
+        write.csv(peplfq_ev$x, file, row.names = FALSE)
       }
     )
 
@@ -758,7 +758,7 @@ server <- function(input, output, session){
         paste0("ProteinGroup_dia_", Sys.Date(), ".xlsx")
       },
       content = function(file){
-        openxlsx::write.xlsx(pg_ev$x, file, rowNames = FALSE)
+        write.csv(pg_ev$x, file, row.names = FALSE)
       }
     )
 
@@ -808,7 +808,7 @@ server <- function(input, output, session){
         paste0("UniqueGenes_dia_", Sys.Date(), ".xlsx")
       },
       content = function(file){
-        openxlsx::write.xlsx(gg_ev$x, file, rowNames = FALSE)
+        write.csv(gg_ev$x, file, row.names = FALSE)
       }
     )
 
