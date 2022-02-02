@@ -18,16 +18,16 @@
 #' @export
 
 diann_matrix <- function (x, id.header = "Precursor.Id", quantity.header = "Precursor.Normalised",
-                          proteotypic.only = F, q = 0.01, protein.q = 1, pg.q = 1,
+                          proteotypic.only = FALSE, q = 0.01, protein.q = 1, pg.q = 1,
                           gg.q = 1, get_pep = FALSE, only_pepall = FALSE){
   df <- data.table::as.data.table(x)
-  if (proteotypic.only)
+  if(proteotypic.only){
     df <- df[which(df[["Proteotypic"]] != 0), ]
-
-  dft <- df[which(df[[id.header]] != "" & df[[quantity.header]] >
-                    0 & df[["Q.Value"]] <= q & df[["Protein.Q.Value"]] <=
+  }
+  dft <- df[which(df[[id.header]] != "" & df[["Q.Value"]] <= q & df[["Protein.Q.Value"]] <=
                     protein.q & df[["PG.Q.Value"]] <= pg.q & df[["GG.Q.Value"]] <=
                     gg.q),]
+
   df <- unique(dft[, c("File.Name", id.header, quantity.header), with = FALSE])
 
   is_duplicated = any(duplicated(paste0(df[["File.Name"]],
@@ -39,7 +39,6 @@ diann_matrix <- function (x, id.header = "Precursor.Id", quantity.header = "Prec
   else {
     out <- pivot(df, "File.Name", id.header, quantity.header)
   }
-
   if(get_pep){
     x <- dft[,c("File.Name", id.header, "Genes.MaxLFQ.Unique", "Precursor.Id"), with = FALSE]
     pep <- as.data.frame(matrix(0, nrow = nrow(out), ncol = 2 + length(unique(x$File.Name))))

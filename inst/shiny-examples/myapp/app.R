@@ -127,11 +127,16 @@ ui <- fluidPage(
                                                                              column(3, numericInput("qvgg_prec", "Choose the gene-groupe q-value to filter the precursors",
                                                                                                     min = 0, max = 1, step = 0.01, value = 1))
                                                                              ),
+                                                                    checkboxInput("protypiconly_prec", "Proteotypic only", TRUE),
                                                                     actionButton("go_prec", "Start calculation", class = "btn-success"),
                                                                     tags$hr(),
                                                                     conditionalPanel(condition = "output.precursor_up",
                                                                                      DT::dataTableOutput("res_prec"),
-                                                                                     downloadButton("down_prec", "Download results")
+                                                                                     fluidRow(column(3, downloadButton("down_prec", "Download results")),
+                                                                                              column(3, selectInput("format_prec", "Select a format",
+                                                                                                                    choices = c("txt", "csv", "xlsx"),
+                                                                                                                    selected = "txt"))
+                                                                                              )
                                                                                      )
                                                                     )
                                                                 ),
@@ -148,11 +153,16 @@ ui <- fluidPage(
                                                                              column(3, numericInput("qvgg_pep", "Choose the gene-groupe q-value to filter the peptides",
                                                                                                     min = 0, max = 1, step = 0.01, value = 1))
                                                                              ),
+                                                                    checkboxInput("protypiconly_pep", "Proteotypic only", TRUE),
                                                                     actionButton("go_pep", "Start calculation", class = "btn-success"),
                                                                     tags$hr(),
                                                                     conditionalPanel(condition = "output.peptide_up",
                                                                                      DT::dataTableOutput("res_pep"),
-                                                                                     downloadButton("down_pep", "Download results")
+                                                                                     fluidRow(column(3, downloadButton("down_pep", "Download results")),
+                                                                                              column(3, selectInput("format_pep", "Select a format",
+                                                                                                                    choices = c("txt", "csv", "xlsx"),
+                                                                                                                    selected = "txt"))
+                                                                                              )
                                                                                      ),
 
                                                                     tags$u(h3("Get your peptide file using the MaxLFQ algorithm")),
@@ -172,11 +182,16 @@ ui <- fluidPage(
                                                                                              "Use fast MaxLFQ from iq package (log2 transformed)" = "iq"),
                                                                                  selected = "diann",
                                                                                  inline = TRUE),
+                                                                    checkboxInput("protypiconly_peplfq", "Proteotypic only", TRUE),
                                                                     actionButton("go_peplfq", "Start calculation", class = "btn-success"),
                                                                     tags$hr(),
                                                                     conditionalPanel(condition = "output.peptideLFQ_up",
                                                                                      DT::dataTableOutput("res_peplfq"),
-                                                                                     downloadButton("down_peplfq", "Download results")
+                                                                                     fluidRow(column(3, downloadButton("down_peplfq", "Download results")),
+                                                                                              column(3, selectInput("format_peplfq", "Select a format",
+                                                                                                                    choices = c("txt", "csv", "xlsx"),
+                                                                                                                    selected = "txt"))
+                                                                                              )
                                                                                      )
                                                                     )
                                                                 )
@@ -206,12 +221,18 @@ ui <- fluidPage(
                                                                                              "Use fast MaxLFQ from iq package (log2 transformed)" = "iq"),
                                                                                  selected = "diann",
                                                                                  inline = TRUE),
-                                                                    checkboxInput("onlycountall_pg", "Only keep peptides counts all", TRUE),
+                                                                    fluidRow(column(3, checkboxInput("onlycountall_pg", "Only keep peptides counts all", TRUE)),
+                                                                             column(3, checkboxInput("protypiconly_pg", "Proteotypic only", TRUE),)
+                                                                             ),
                                                                     actionButton("go_pg", "Start calculation", class = "btn-success"),
                                                                     tags$hr(),
                                                                     conditionalPanel(condition = "output.proteins_up",
                                                                                      DT::dataTableOutput("res_pg"),
-                                                                                     downloadButton("down_pg", "Download results")
+                                                                                     fluidRow(column(3, downloadButton("down_pg", "Download results")),
+                                                                                              column(3, selectInput("format_pg", "Select a format",
+                                                                                                                    choices = c("txt", "csv", "xlsx"),
+                                                                                                                    selected = "txt"))
+                                                                                              )
                                                                                      )
                                                                     )
                                                                 ),
@@ -228,12 +249,18 @@ ui <- fluidPage(
                                                                              column(3, numericInput("qvgg_gg", "Choose the gene-groupe q-value to filter the genes",
                                                                                                     min = 0, max = 1, step = 0.01, value = 1))
                                                                              ),
-                                                                    checkboxInput("onlycountall_gg", "Only keep peptides counts all", TRUE),
+                                                                    fluidRow(column(3, checkboxInput("onlycountall_gg", "Only keep peptides counts all", TRUE)),
+                                                                             column(3, checkboxInput("protypiconly_gg", "Proteotypic only", TRUE),)
+                                                                             ),
                                                                     actionButton("go_gg", "Start calculation", class = "btn-success"),
                                                                     tags$hr(),
                                                                     conditionalPanel(condition = "output.genes_up",
                                                                                      DT::dataTableOutput("res_gg"),
-                                                                                     downloadButton("down_gg", "Download results")
+                                                                                     fluidRow(column(3, downloadButton("down_gg", "Download results")),
+                                                                                              column(3, selectInput("format_gg", "Select a format",
+                                                                                                                    choices = c("txt", "csv", "xlsx"),
+                                                                                                                    selected = "txt"))
+                                                                                              )
                                                                                      )
                                                                     )
                                                                 )
@@ -508,10 +535,11 @@ server <- function(input, output, session){
     precu <- reactive({
       df <- Report_data$d
       d <- diann_matrix(df,
-                   q = input$qv_prec,
-                   protein.q = input$qvprot_prec,
-                   pg.q = input$qvpg_prec,
-                   gg.q = input$qvgg_prec)
+                        proteotypic.only = input$protypiconly_prec,
+                        q = input$qv_prec,
+                        protein.q = input$qvprot_prec,
+                        pg.q = input$qvpg_prec,
+                        gg.q = input$qvgg_prec)
       d <- as.data.frame(d)
       nc <- ncol(d)
       d$Precursor.Id <- rownames(d)
@@ -548,10 +576,18 @@ server <- function(input, output, session){
     })
     output$down_prec <- downloadHandler(
       filename = function() {
-        paste0("Precursors_dia_", Sys.Date(), ".xlsx")
+        paste0("Precursors_dia_", Sys.Date(), ".", input$format_prec)
       },
       content = function(file){
-        write.csv(precu_ev$x, file, row.names = FALSE)
+        if(input$format_prec == "xlsx"){
+          openxlsx::write.xlsx(precu_ev$x, file, rowNames = FALSE)
+        }
+        else if(input$format_prec == "csv"){
+          write.csv(precu_ev$x, file, row.names =  FALSE, quote = FALSE)
+        }
+        else if(input$format_prec == "txt"){
+          write.table(precu_ev$x, file, row.names = FALSE, sep = "\t", quote = FALSE)
+        }
       }
     )
 
@@ -562,11 +598,12 @@ server <- function(input, output, session){
     pep <- reactive({
       df <- Report_data$d
       d <- diann_matrix(df,
-                   id.header="Stripped.Sequence",
-                   q = input$qv_pep,
-                   protein.q = input$qvprot_pep,
-                   pg.q = input$qvpg_pep,
-                   gg.q = input$qvgg_pep)
+                        id.header="Stripped.Sequence",
+                        proteotypic.only = input$protypiconly_pep,
+                        q = input$qv_pep,
+                        protein.q = input$qvprot_pep,
+                        pg.q = input$qvpg_pep,
+                        gg.q = input$qvgg_pep)
       d <- as.data.frame(d)
       nc <- ncol(d)
       d$Stripped.Sequence <- rownames(d)
@@ -602,10 +639,18 @@ server <- function(input, output, session){
     })
     output$down_pep <- downloadHandler(
       filename = function() {
-        paste0("Peptides_dia_", Sys.Date(), ".xlsx")
+        paste0("Peptides_dia_", Sys.Date(), ".", input$format_pep)
       },
       content = function(file){
-        write.csv(pep_ev$x, file, row.names = FALSE)
+        if(input$format_pep == "xlsx"){
+          openxlsx::write.xlsx(precu_ev$x, file, rowNames = FALSE)
+        }
+        else if(input$format_pep == "csv"){
+          write.csv(precu_ev$x, file, row.names =  FALSE, quote = FALSE)
+        }
+        else if(input$format_pep == "txt"){
+          write.table(precu_ev$x, file, row.names = FALSE, sep = "\t", quote = FALSE)
+        }
       }
     )
 
@@ -615,6 +660,9 @@ server <- function(input, output, session){
     )
     peplfq <- reactive({
       df <- Report_data$d
+      if(input$protypiconly_peplfq){
+        df <- df[which(df[["Proteotypic"]] != 0), ]
+      }
       df <- df %>% dplyr::filter(Q.Value <= input$qv_peplfq & PG.Q.Value <= input$qvpg_peplfq & Protein.Q.Value <= input$qvprot_peplfq & GG.Q.Value <= input$qvgg_peplfq)
       if(input$wLFQ_peplfq == "diann"){
         d <- diann_maxlfq(df,
@@ -668,10 +716,18 @@ server <- function(input, output, session){
     })
     output$down_peplfq <- downloadHandler(
       filename = function() {
-        paste0("PeptidesMaxLFQ_dia_", Sys.Date(), ".xlsx")
+        paste0("PeptidesMaxLFQ_dia_", Sys.Date(), ".", input$format_peplfq)
       },
       content = function(file){
-        write.csv(peplfq_ev$x, file, row.names = FALSE)
+        if(input$format_peplfq == "xlsx"){
+          openxlsx::write.xlsx(precu_ev$x, file, rowNames = FALSE)
+        }
+        else if(input$format_peplfq == "csv"){
+          write.csv(precu_ev$x, file, row.names =  FALSE, quote = FALSE)
+        }
+        else if(input$format_peplfq == "txt"){
+          write.table(precu_ev$x, file, row.names = FALSE, sep = "\t", quote = FALSE)
+        }
       }
     )
 
@@ -681,6 +737,9 @@ server <- function(input, output, session){
     )
     pg <- reactive({
       df <- Report_data$d
+      if(input$protypiconly_pg){
+        df <- df[which(df[["Proteotypic"]] != 0), ]
+      }
       df <- df %>% dplyr::filter(Q.Value <= input$qv_pg & PG.Q.Value <= input$qvpg_pg & Protein.Q.Value <= input$qvprot_pg & GG.Q.Value <= input$qvgg_pg)
       if(input$wLFQ_pg == "diann"){
         d <- diann_maxlfq(df,
@@ -755,10 +814,18 @@ server <- function(input, output, session){
     })
     output$down_pg <- downloadHandler(
       filename = function() {
-        paste0("ProteinGroup_dia_", Sys.Date(), ".xlsx")
+        paste0("ProteinGroup_dia_", Sys.Date(), ".", input$format_pg)
       },
       content = function(file){
-        write.csv(pg_ev$x, file, row.names = FALSE)
+        if(input$format_pg == "xlsx"){
+          openxlsx::write.xlsx(precu_ev$x, file, rowNames = FALSE)
+        }
+        else if(input$format_pg == "csv"){
+          write.csv(precu_ev$x, file, row.names =  FALSE, quote = FALSE)
+        }
+        else if(input$format_pg == "txt"){
+          write.table(precu_ev$x, file, row.names = FALSE, sep = "\t", quote = FALSE)
+        }
       }
     )
 
@@ -771,7 +838,7 @@ server <- function(input, output, session){
       d <- diann_matrix(df,
                    id.header="Genes",
                    quantity.header="Genes.MaxLFQ.Unique",
-                   proteotypic.only = TRUE,
+                   proteotypic.only = input$protypiconly_gg,
                    q = input$qv_gg,
                    protein.q = input$qvprot_gg,
                    pg.q = input$qvpg_gg,
@@ -805,10 +872,18 @@ server <- function(input, output, session){
     })
     output$down_gg <- downloadHandler(
       filename = function() {
-        paste0("UniqueGenes_dia_", Sys.Date(), ".xlsx")
+        paste0("UniqueGenes_dia_", Sys.Date(), ".", input$format_gg)
       },
       content = function(file){
-        write.csv(gg_ev$x, file, row.names = FALSE)
+        if(input$format_gg == "xlsx"){
+          openxlsx::write.xlsx(precu_ev$x, file, rowNames = FALSE)
+        }
+        else if(input$format_gg == "csv"){
+          write.csv(precu_ev$x, file, row.names =  FALSE, quote = FALSE)
+        }
+        else if(input$format_gg == "txt"){
+          write.table(precu_ev$x, file, row.names = FALSE, sep = "\t", quote = FALSE)
+        }
       }
     )
 
