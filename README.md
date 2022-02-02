@@ -11,27 +11,27 @@ First, go to Rstudio. Before installing DIAgui, you will need to install [limma]
 package from bioconductor in order to use all functionnalities from the app.
 Run this commands :
 
-*> if(!requireNamespace("BiocManager", quietly = TRUE)){*
+* if(!requireNamespace("BiocManager", quietly = TRUE)){
 
-*> install.packages("BiocManager")*  
+* install.packages("BiocManager")  
 
-*> }*
+* }
 
-*> BiocManager::install("limma")  
+* BiocManager::install("limma")  
 
 You can now install DIAgui from github : 
 
-*> if(!requireNamespace("devtools", quietly = TRUE)){*
+* if(!requireNamespace("devtools", quietly = TRUE)){
 
-*> install.packages("devtools")*  
+* install.packages("devtools") 
 
-*> }*  
+* }
 
-*> devtools::install_github("mgerault/DIAgui")*
+* devtools::install_github("mgerault/DIAgui")
 
 You can now load it and run the app with this commands : 
 
-*> library(DIAgui)*
+* library(DIAgui)
 
-*> runDIAgui()*
+* runDIAgui()
 
