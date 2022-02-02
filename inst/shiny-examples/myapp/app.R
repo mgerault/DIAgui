@@ -643,13 +643,13 @@ server <- function(input, output, session){
       },
       content = function(file){
         if(input$format_pep == "xlsx"){
-          openxlsx::write.xlsx(precu_ev$x, file, rowNames = FALSE)
+          openxlsx::write.xlsx(pep_ev$x, file, rowNames = FALSE)
         }
         else if(input$format_pep == "csv"){
-          write.csv(precu_ev$x, file, row.names =  FALSE, quote = FALSE)
+          write.csv(pep_ev$x, file, row.names =  FALSE, quote = FALSE)
         }
         else if(input$format_pep == "txt"){
-          write.table(precu_ev$x, file, row.names = FALSE, sep = "\t", quote = FALSE)
+          write.table(pep_ev$x, file, row.names = FALSE, sep = "\t", quote = FALSE)
         }
       }
     )
@@ -720,13 +720,13 @@ server <- function(input, output, session){
       },
       content = function(file){
         if(input$format_peplfq == "xlsx"){
-          openxlsx::write.xlsx(precu_ev$x, file, rowNames = FALSE)
+          openxlsx::write.xlsx(peplfq_ev$x, file, rowNames = FALSE)
         }
         else if(input$format_peplfq == "csv"){
-          write.csv(precu_ev$x, file, row.names =  FALSE, quote = FALSE)
+          write.csv(peplfq_ev$x, file, row.names =  FALSE, quote = FALSE)
         }
         else if(input$format_peplfq == "txt"){
-          write.table(precu_ev$x, file, row.names = FALSE, sep = "\t", quote = FALSE)
+          write.table(peplfq_ev$x, file, row.names = FALSE, sep = "\t", quote = FALSE)
         }
       }
     )
@@ -818,13 +818,13 @@ server <- function(input, output, session){
       },
       content = function(file){
         if(input$format_pg == "xlsx"){
-          openxlsx::write.xlsx(precu_ev$x, file, rowNames = FALSE)
+          openxlsx::write.xlsx(pg_ev$x, file, rowNames = FALSE)
         }
         else if(input$format_pg == "csv"){
-          write.csv(precu_ev$x, file, row.names =  FALSE, quote = FALSE)
+          write.csv(pg_ev$x, file, row.names =  FALSE, quote = FALSE)
         }
         else if(input$format_pg == "txt"){
-          write.table(precu_ev$x, file, row.names = FALSE, sep = "\t", quote = FALSE)
+          write.table(pg_ev$x, file, row.names = FALSE, sep = "\t", quote = FALSE)
         }
       }
     )
@@ -876,13 +876,13 @@ server <- function(input, output, session){
       },
       content = function(file){
         if(input$format_gg == "xlsx"){
-          openxlsx::write.xlsx(precu_ev$x, file, rowNames = FALSE)
+          openxlsx::write.xlsx(gg_ev$x, file, rowNames = FALSE)
         }
         else if(input$format_gg == "csv"){
-          write.csv(precu_ev$x, file, row.names =  FALSE, quote = FALSE)
+          write.csv(gg_ev$x, file, row.names =  FALSE, quote = FALSE)
         }
         else if(input$format_gg == "txt"){
-          write.table(precu_ev$x, file, row.names = FALSE, sep = "\t", quote = FALSE)
+          write.table(gg_ev$x, file, row.names = FALSE, sep = "\t", quote = FALSE)
         }
       }
     )
