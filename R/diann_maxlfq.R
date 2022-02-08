@@ -12,6 +12,7 @@
 #' @param quantity.header Quantity column name
 #' @param get_pep logical; get peptide count ?
 #' @param only_pepall logical; should only keep peptide counts all or also peptide counts for each fractions ?
+#' @param Top3 logical; get Top3 absolute quantification
 #'
 #' @return A dataframe containing the quantities from the id you selected
 #'
@@ -19,7 +20,7 @@
 
 diann_maxlfq <- function (x, sample.header = "File.Name", group.header = "Protein.Names",
                           id.header = "Precursor.Id", quantity.header = "Precursor.Normalised",
-                          margin = -10, count_pep = TRUE, only_countsall = FALSE){
+                          margin = -10, count_pep = TRUE, only_countsall = FALSE, Top3 = FALSE){
   df <- data.table::as.data.table(x)
   df <- unique(df[which(df[[group.header]] != ""), c(sample.header,
                                                      group.header, id.header, quantity.header), with = FALSE])
@@ -90,16 +91,74 @@ diann_maxlfq <- function (x, sample.header = "File.Name", group.header = "Protei
   result <- as.data.frame(result)
   result <- result[order(rownames(result)),]
 
+  if(Top3){
+    all_iden <- lapply(all_iden, function(x){
+      x[which(x <= margin)] <- NA;
+      x
+    })
+
+    top3_iden <- lapply(all_iden, function(x){
+      x <- apply(x, 2, function(y){
+        if(sum(!is.na(y)) < 3){
+          y <- NA
+        }
+        else{
+          y <- y[order(y, decreasing = TRUE)][1:3]
+          y <- mean(y)
+        };
+        y
+      })
+      x <- as.data.frame(t(x))
+      n <- samples[!(samples %in% colnames(x))]
+      if(!purrr::is_empty(n)){
+        for(i in n){
+          x[[i]] <- NA
+        }
+      };
+      x
+    })
+    p = names(top3_iden)
+    top3_iden <- Reduce(rbind, top3_iden)
+    rownames(top3_iden) <- p
+
+    top3_piv <- lapply(all_piv, function(x){
+      x <- apply(x, 2, function(y){
+        y <- NA;
+        y
+      })
+      x <- as.data.frame(t(x))
+      n <- samples[!(samples %in% colnames(x))]
+      if(!purrr::is_empty(n)){
+        for(i in n){
+          x[[i]] <- NA
+        }
+      };
+      x
+    })
+    p = names(top3_piv)
+    top3_piv <- Reduce(rbind, top3_piv)
+    rownames(top3_piv) <- p
+
+    sumup <- rbind(top3_iden, top3_piv)
+    sumup <- sumup[order(rownames(sumup)),]
+    colnames(sumup) <- paste0("Top3_", colnames(sumup))
+    sumup <- exp(sumup)
+
+    result <- cbind(result, sumup)
+  }
+
   if(count_pep){
     nbPep <- nbPep[order(names(nbPep))]
     nbPep <- unname(unlist(nbPep))
     result$peptide_counts_all <- nbPep
 
     if(!only_countsall){
-      all_iden <- lapply(all_iden, function(x){
-        x[which(x <= margin)] <- NA;
-        x
-      })
+      if(!Top3){# avoid doing it twice if Top3 is calculated
+        all_iden <- lapply(all_iden, function(x){
+          x[which(x <= margin)] <- NA;
+          x
+        })
+      }
       all_iden <- lapply(all_iden, function(x){
         apply(x, 2, function(k){
           sum(!is.na(k))
