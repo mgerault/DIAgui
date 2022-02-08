@@ -35,8 +35,9 @@ ui <- fluidPage(
                              .datatables {background-color: #ffffff")
                        )
             ),
+
   navbarPage(
-    "DIA-NN R routine",
+    title = "DIA-NN R routine",
     tabPanel("Process",
              sidebarLayout(
                sidebarPanel(
@@ -45,7 +46,7 @@ ui <- fluidPage(
                                            All quantities are based on the column named 'Precursor.Normalized' from the report file.<br>
                                            Each threshold you can select correspond to a q-value (look in the report your imported).
                                            If you set a value to 1, it will not apply any filter according to this value.<br>
-                                           All downloaded files are saved in xlsx format, with the IDs in the first column.
+                                           All generated files can be saved in txt, csv or xlsx format.
                                         <p><h3>The MaxLFQ algorithm</h3><br>
                                                This algorithm is another way to determine intensity and to normalize data
                                                in Label-Free quantification.  Quickly, the aim is to perfom a 'delayed normalization'
@@ -60,8 +61,11 @@ ui <- fluidPage(
                  conditionalPanel(condition = "input.tab1 == 'Import your data'",
                                   HTML("<p>After your analysis with the DIA-nn software, you can find the file 'report.tsv' in your results.
                                            From this file, you can filter your data according to your criterias, use the MaxLFQ algorithm
-                                           for quantification and normalization and then get back the files you're interested in. <br>
-                                           The aim of this app is to provide you a 'user-friendly' interface in order to use the diann R routine."
+                                           for quantification and normalization, get the number of peptides used for the quantification,
+                                           get the Top3 absolute quantification and then save the files you want to keep. <br>
+                                           The aim of this app is to provide you a 'user-friendly' interface in order to use the diann R routine
+                                           and adding some other usefull informations.
+                                        </p>"
                                        )
                                   ),
                  width = 3
@@ -132,6 +136,7 @@ ui <- fluidPage(
                                                                     tags$hr(),
                                                                     conditionalPanel(condition = "output.precursor_up",
                                                                                      DT::dataTableOutput("res_prec"),
+                                                                                     tags$hr(),
                                                                                      fluidRow(column(3, downloadButton("down_prec", "Download results")),
                                                                                               column(3, selectInput("format_prec", "Select a format",
                                                                                                                     choices = c("txt", "csv", "xlsx"),
@@ -158,6 +163,7 @@ ui <- fluidPage(
                                                                     tags$hr(),
                                                                     conditionalPanel(condition = "output.peptide_up",
                                                                                      DT::dataTableOutput("res_pep"),
+                                                                                     tags$hr(),
                                                                                      fluidRow(column(3, downloadButton("down_pep", "Download results")),
                                                                                               column(3, selectInput("format_pep", "Select a format",
                                                                                                                     choices = c("txt", "csv", "xlsx"),
@@ -187,6 +193,7 @@ ui <- fluidPage(
                                                                     tags$hr(),
                                                                     conditionalPanel(condition = "output.peptideLFQ_up",
                                                                                      DT::dataTableOutput("res_peplfq"),
+                                                                                     tags$hr(),
                                                                                      fluidRow(column(3, downloadButton("down_peplfq", "Download results")),
                                                                                               column(3, selectInput("format_peplfq", "Select a format",
                                                                                                                     choices = c("txt", "csv", "xlsx"),
@@ -222,12 +229,14 @@ ui <- fluidPage(
                                                                                  selected = "diann",
                                                                                  inline = TRUE),
                                                                     fluidRow(column(3, checkboxInput("onlycountall_pg", "Only keep peptides counts all", TRUE)),
-                                                                             column(3, checkboxInput("protypiconly_pg", "Proteotypic only", TRUE),)
+                                                                             column(3, checkboxInput("protypiconly_pg", "Proteotypic only", TRUE)),
+                                                                             column(3, checkboxInput("Top3_pg", "Get Top3 quantification", TRUE))
                                                                              ),
                                                                     actionButton("go_pg", "Start calculation", class = "btn-success"),
                                                                     tags$hr(),
                                                                     conditionalPanel(condition = "output.proteins_up",
                                                                                      DT::dataTableOutput("res_pg"),
+                                                                                     tags$hr(),
                                                                                      fluidRow(column(3, downloadButton("down_pg", "Download results")),
                                                                                               column(3, selectInput("format_pg", "Select a format",
                                                                                                                     choices = c("txt", "csv", "xlsx"),
@@ -250,12 +259,14 @@ ui <- fluidPage(
                                                                                                     min = 0, max = 1, step = 0.01, value = 1))
                                                                              ),
                                                                     fluidRow(column(3, checkboxInput("onlycountall_gg", "Only keep peptides counts all", TRUE)),
-                                                                             column(3, checkboxInput("protypiconly_gg", "Proteotypic only", TRUE),)
+                                                                             column(3, checkboxInput("protypiconly_gg", "Proteotypic only", TRUE)),
+                                                                             column(3, checkboxInput("Top3_gg", "Get Top3 quantification", TRUE))
                                                                              ),
                                                                     actionButton("go_gg", "Start calculation", class = "btn-success"),
                                                                     tags$hr(),
                                                                     conditionalPanel(condition = "output.genes_up",
                                                                                      DT::dataTableOutput("res_gg"),
+                                                                                     tags$hr(),
                                                                                      fluidRow(column(3, downloadButton("down_gg", "Download results")),
                                                                                               column(3, selectInput("format_gg", "Select a format",
                                                                                                                     choices = c("txt", "csv", "xlsx"),
@@ -373,7 +384,12 @@ ui <- fluidPage(
                              )
                  )
                )
-             )
+             ),
+
+    bslib::nav_item(a(href = "mailto:marco.gerault@gmail.com",
+                      icon("envelope"),
+                      title = "Any questions, suggestions or bug report ? Feel free to send me an e-mail !")
+                    )
     )
 )
 
@@ -746,7 +762,8 @@ server <- function(input, output, session){
                           group.header="Protein.Group",
                           id.header = "Precursor.Id",
                           quantity.header = "Precursor.Normalised",
-                          only_countsall = input$onlycountall_pg
+                          only_countsall = input$onlycountall_pg,
+                          Top3 = input$Top3_pg
                           )
       }
       else if(input$wLFQ_pg == "iq"){
@@ -771,10 +788,36 @@ server <- function(input, output, session){
         pc$peptides_counts_all <- unname(apply(pc, 1, max))
         pc <- pc[,c(ncol(pc), 1:(ncol(pc)-1))]
 
+        if(input$Top3_pg){
+          Top3 <- d %>% dplyr::group_by(protein_list) %>%
+            tidyr::spread(sample_list, quant)
+          Top3$id <- NULL
+          top3_f <- function(x){
+            if(sum(!is.na(x)) < 3){
+              x <- NA
+            }
+            else{
+              x <- x[order(x, decreasing = TRUE)][1:3]
+              x <- mean(x)
+            }
+          }
+          Top3 <- Top3 %>% dplyr::group_by(protein_list) %>%
+            dplyr::summarise(dplyr::across(dplyr::everything(), top3_f))
+
+          Top3 <- as.data.frame(Top3)
+          rownames(Top3) <- Top3$protein_list
+          Top3$protein_list <- NULL
+          colnames(Top3) <- paste0("Top3_", colnames(Top3))
+          Top3 <- Top3[order(rownames(Top3)),]
+        }
+
         d <- iq::fast_MaxLFQ(d)
         d <- d$estimate
         d <- as.data.frame(d)
         d <- d[order(rownames(d)),]
+        if(input$Top3_pg){
+          d <- cbind(d, Top3)
+        }
         if(input$onlycountall_pg){
           d$peptides_counts_all <- pc$peptides_counts_all
         }
@@ -843,7 +886,8 @@ server <- function(input, output, session){
                    protein.q = input$qvprot_gg,
                    pg.q = input$qvpg_gg,
                    gg.q = input$qvgg_gg,
-                   get_pep = TRUE, only_pepall = input$onlycountall_gg)
+                   get_pep = TRUE, only_pepall = input$onlycountall_gg,
+                   Top3 = input$Top3_gg)
       nc <- ncol(d)
       d$Genes <- rownames(d)
       rownames(d) <- 1:nrow(d)

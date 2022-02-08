@@ -26,6 +26,7 @@ Imports:
     data.table,
     dplyr,
     tidyr,
+    purrr,
     plotly,
     ggplot2,
     ggrepel,
