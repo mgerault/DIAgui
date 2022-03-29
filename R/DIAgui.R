@@ -14,6 +14,7 @@
 #' @import Rcpp
 #' @import RcppEigen
 #' @import iq
+#' @import seqinr
 #'
 #' @useDynLib DIAgui
 NULL

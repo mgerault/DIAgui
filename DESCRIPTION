@@ -16,13 +16,15 @@ RoxygenNote: 7.1.2
 Depends:
     R (>= 4.0.0),
     dplyr (>= 1.0.0),
-    iq (>= 1.9.0)
+    iq (>= 1.9.0),
+    seqinr (>= 4.2)
 Imports: 
     shiny,
     shinydashboard,
     shinycssloaders,
     shinyWidgets,
     shinyFiles,
+    shinyjs,
     data.table,
     dplyr,
     tidyr,
@@ -30,10 +32,12 @@ Imports:
     plotly,
     ggplot2,
     ggrepel,
+    ggpubr,
     stringr,
     Rcpp,
     RcppEigen,
     iq,
+    seqinr,
     DT
 Suggests: limma
 LinkingTo: 

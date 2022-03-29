@@ -230,8 +230,23 @@ ui <- fluidPage(
                                                                                  inline = TRUE),
                                                                     fluidRow(column(3, checkboxInput("onlycountall_pg", "Only keep peptides counts all", TRUE)),
                                                                              column(3, checkboxInput("protypiconly_pg", "Proteotypic only", TRUE)),
-                                                                             column(3, checkboxInput("Top3_pg", "Get Top3 quantification", TRUE))
+                                                                             column(3, checkboxInput("Top3_pg", "Get Top3 quantification", TRUE)),
+                                                                             column(3, checkboxInput("iBAQ_pg", "Get iBAQ quantification", TRUE))
                                                                              ),
+                                                                    conditionalPanel(condition = "input.iBAQ_pg",
+                                                                                     fluidRow(column(4, selectizeInput("species_pg", "Choose a species",
+                                                                                                                       choices = DIAgui::all_species, selected = "HOMO SAPIENS")
+                                                                                                     ),
+                                                                                              column(4, sliderInput("peplen_pg", "Choose the min and max peptide length",
+                                                                                                                    min = 0, max = 100, value = c(5,36), step = 1)
+                                                                                                     ),
+                                                                                              column(4, selectInput("enzyme_pg", "Choose an enzyme", choices = c("trypsin", "lys-c"), selected = "trypsin")
+                                                                                                     )
+                                                                                              ),
+                                                                                     tags$hr(),
+                                                                                     textOutput("diag_getseq"),
+                                                                                     tags$hr(),
+                                                                                     ),
                                                                     actionButton("go_pg", "Start calculation", class = "btn-success"),
                                                                     tags$hr(),
                                                                     conditionalPanel(condition = "output.proteins_up",
@@ -243,7 +258,8 @@ ui <- fluidPage(
                                                                                                                     selected = "txt"))
                                                                                               )
                                                                                      )
-                                                                    )
+                                                                    ),
+                                                                shinyjs::useShinyjs()
                                                                 ),
                                                        fluidRow(box(title = "Unique genes", status = "success", solidHeader = TRUE, collapsible = TRUE, width = 12,
                                                                     tags$u(h3("Get your unique genes file")),
@@ -279,107 +295,145 @@ ui <- fluidPage(
                                       ),
                              tabPanel("Data visualization",
                                       tags$hr(),
-                                      fluidRow(box(title = "Data choice", status = "success", solidHeader = TRUE, collapsible = TRUE, width = 12,
-                                                   conditionalPanel(condition = "output.reportdata_up",
-                                                                    radioButtons("choice_visu", "",
-                                                                                 choices = c("Visualize imported data" = "base",
-                                                                                             "Import your own data" = "dat"),
-                                                                                 selected = "dat",
-                                                                                 inline = TRUE),
-                                                                    conditionalPanel(condition = "input.choice_visu == 'base'",
-                                                                                     radioButtons("bdata_visu", "",
-                                                                                                  choices = c("Protein group",
-                                                                                                              "Unique genes",
-                                                                                                              "Peptides",
-                                                                                                              "Peptides.MaxLFQ",
-                                                                                                              "Precursors"),
-                                                                                                  selected = "Protein group",
-                                                                                                  inline = TRUE)
-                                                                                     )
-                                                                    ),
-                                                   conditionalPanel(condition = "!output.reportdata_up | input.choice_visu == 'dat'",
-                                                                    fileInput("ydata_visu", "Import your data. The protein group file, for example.")
-                                                                    )
-                                                   )
-                                               ),
+                                      tabsetPanel(type = "tabs",
+                                                  tabPanel("Check results",
+                                                           tags$hr(),
+                                                            fluidRow(box(title = "Data choice", status = "success", solidHeader = TRUE, collapsible = TRUE, width = 12,
+                                                                         conditionalPanel(condition = "output.reportdata_up",
+                                                                                          radioButtons("choice_visu", "",
+                                                                                                       choices = c("Visualize imported data" = "base",
+                                                                                                                   "Import your own data" = "dat"),
+                                                                                                       selected = "dat",
+                                                                                                       inline = TRUE),
+                                                                                          conditionalPanel(condition = "input.choice_visu == 'base'",
+                                                                                                           radioButtons("bdata_visu", "",
+                                                                                                                        choices = c("Protein group",
+                                                                                                                                    "Unique genes",
+                                                                                                                                    "Peptides",
+                                                                                                                                    "Peptides.MaxLFQ",
+                                                                                                                                    "Precursors"),
+                                                                                                                        selected = "Protein group",
+                                                                                                                        inline = TRUE)
+                                                                                                           )
+                                                                                          ),
+                                                                         conditionalPanel(condition = "!output.reportdata_up | input.choice_visu == 'dat'",
+                                                                                          fileInput("ydata_visu", "Import your data. The protein group file, for example.")
+                                                                                          )
+                                                                         )
+                                                                     ),
 
-                                      conditionalPanel(condition = "output.visudata_up",
-                                                       fluidRow(box(title = "Visualiation", status = "success", solidHeader = TRUE, collapsible = TRUE, width = 12,
-                                                                    tabsetPanel(type = "tabs",
-                                                                                tabPanel("Heatmap",
+                                                            conditionalPanel(condition = "output.visudata_up",
+                                                                             fluidRow(box(title = "Visualiation", status = "success", solidHeader = TRUE, collapsible = TRUE, width = 12,
+                                                                                          tabsetPanel(type = "tabs",
+                                                                                                      tabPanel("Heatmap",
+                                                                                                               tags$hr(),
+                                                                                                               fluidRow(column(3, selectInput("transfo_visu", "Choose a data transformation",
+                                                                                                                                              choices = c("Log2" = "log2",
+                                                                                                                                                          "Z-score on the proteins" = "z.score_protein",
+                                                                                                                                                          "Z-score on the fractions" = "z.score_fraction",
+                                                                                                                                                          "None" = "none"), selected = "none")),
+                                                                                                                        column(3, checkboxInput("prval_visu", "Print values on blocks", TRUE),
+                                                                                                                               sliderInput("maxna", "Choose the maximum number of missing values per rows",
+                                                                                                                                           value = 0, min = 0, step = 1, max = 3)),
+                                                                                                                        conditionalPanel(condition = "!output.reportdata_up | input.choice_visu == 'dat'",
+                                                                                                                                         column(3, textInput("nmid_visu", "Type the name of the column that conatain
+                                                                                                                                        the IDs"))
+                                                                                                                                         ),
+                                                                                                                        column(3, actionButton("seeheat_visu", "See heatmap", class = "btn-success"))
+                                                                                                                        ),
+                                                                                                               tags$hr(),
+                                                                                                               withSpinner(plotlyOutput("heat_visu", height = "800px"), type = 6)
+                                                                                                               ),
+                                                                                                      tabPanel("Density",
+                                                                                                               tags$hr(),
+                                                                                                               fluidRow(column(3, selectInput("transfoD_visu", "Choose a data transformation",
+                                                                                                                                              choices = c("Log2" = "log2",
+                                                                                                                                                          "None" = "none"), selected = "none")),
+                                                                                                                        column(3, checkboxInput("area_visu", "Print area of the density curves", TRUE)),
+                                                                                                                        column(3, textInput("titD_visu", "Choose a title for your plot (can be NULL)")),
+                                                                                                                        column(3, actionButton("seedens_visu", "See density plot", class = "btn-success"))
+                                                                                                               ),
+                                                                                                               tags$hr(),
+                                                                                                               withSpinner(plotOutput("dens_visu", height = "800px"), type = 6),
+                                                                                                               downloadButton("down_dens", "Download density plot")
+                                                                                                               ),
+                                                                                                      tabPanel("MDS",
+                                                                                                               tags$hr(),
+                                                                                                               fluidRow(column(4, selectInput("transfoM_visu", "Choose a data transformation",
+                                                                                                                                              choices = c("Log2" = "log2",
+                                                                                                                                                          "None" = "none"), selected = "none")),
+                                                                                                                        column(4, textInput("titM_visu", "Choose a title for your plot (can be NULL)")),
+                                                                                                                        column(4, actionButton("seemds_visu", "See MDS plot", class = "btn-success"))
+                                                                                                               ),
+                                                                                                               tags$hr(),
+                                                                                                               withSpinner(plotOutput("mds_visu", height = "800px"), type = 6),
+                                                                                                               downloadButton("down_mds", "Download MDS plot")
+                                                                                                               ),
+                                                                                                      tabPanel("Retention time",
+                                                                                                               conditionalPanel(condition = "input.choice_visu == 'base'",
+                                                                                                                                tags$hr(),
+                                                                                                                                fluidRow(column(4, actionButton("seert_visu", "See RT vs iRT", class = "btn-success"))
+                                                                                                                                         ),
+                                                                                                                                tags$hr(),
+                                                                                                                                withSpinner(plotlyOutput("rt1_visu", height = "800px"), type = 6),
+                                                                                                                                withSpinner(plotlyOutput("rt2_visu", height = "800px"), type = 6)
+                                                                                                                                ),
+                                                                                                               conditionalPanel(condition = "input.choice_visu == 'dat'",
+                                                                                                                                h3("You need to import the report file from DIA nn to use this tab.
+                                                                                                                                    For this, go back to the first tab 'Import your data'"))
+                                                                                                               ),
+                                                                                                      tabPanel("Proteotypic",
+                                                                                                               conditionalPanel(condition = "input.choice_visu == 'base'",
+                                                                                                                                tags$hr(),
+                                                                                                                                fluidRow(column(4, actionButton("seeptyp_visu", "See proteotypic proportion", class = "btn-success"))
+                                                                                                                                ),
+                                                                                                                                tags$hr(),
+                                                                                                                                withSpinner(plotOutput("ptyp1_visu", height = "600px"), type = 6),
+                                                                                                                                withSpinner(plotOutput("ptyp2_visu", height = "600px"), type = 6)
+                                                                                                               ),
+                                                                                                               conditionalPanel(condition = "input.choice_visu == 'dat'",
+                                                                                                                                h3("You need to import the report file from DIA nn to use this tab.
+                                                                                                                                    For this, go back to the first tab 'Import your data'"))
+                                                                                                               )
+                                                                                                      )
+                                                                                          )
+                                                                                      )
+                                                                             )
+                                                            ),
+                                                  tabPanel("Check other reports",
+                                                           tags$hr(),
+                                                           fluidRow(box(title = "Window selection", status = "success", solidHeader = TRUE, collapsible = TRUE, width = 12,
+                                                                        fluidRow(column(6, shinyFilesButton("replib_wsel", label = "Select your report file", title = "Please select a file",
+                                                                                                            icon = icon("file"),
+                                                                                                            multiple = TRUE, viewtype = "detail", buttonType = "success", class = "btn-lg"))
+                                                                        ),
+                                                                        conditionalPanel(condition = "output.libdata_up",
                                                                                          tags$hr(),
-                                                                                         fluidRow(column(3, selectInput("transfo_visu", "Choose a data transformation",
-                                                                                                                        choices = c("Log2" = "log2",
-                                                                                                                                    "Z-score on the proteins" = "z.score_protein",
-                                                                                                                                    "Z-score on the fractions" = "z.score_fraction",
-                                                                                                                                    "None" = "none"), selected = "none")),
-                                                                                                  column(3, checkboxInput("prval_visu", "Print values on blocks", TRUE),
-                                                                                                         sliderInput("maxna", "Choose the maximum number of missing values per rows",
-                                                                                                                     value = 0, min = 0, step = 1, max = 3)),
-                                                                                                  conditionalPanel(condition = "!output.reportdata_up | input.choice_visu == 'dat'",
-                                                                                                                   column(3, textInput("nmid_visu", "Type the name of the column that conatain
-                                                                                                                  the IDs"))
-                                                                                                                   ),
-                                                                                                  column(3, actionButton("seeheat_visu", "See heatmap", class = "btn-success"))
+                                                                                         fluidRow(column(4, numericInput("bins_wsel", "Select the number of windows you want to have",
+                                                                                                                         25, min = 5, step = 1)),
+                                                                                                  column(4, checkboxInput("perfrac_wsel", "Average the best windows from each fraction", FALSE))
+                                                                                         ),
+                                                                                         fluidRow(column(4, actionButton("go_wsel", "Get best windows", class = "btn-success")),
+                                                                                                  column(6, radioButtons("whichplot_wsel", "", choices = c("Visualize global distribution" = "all",
+                                                                                                                                                           "Visualize distribution from each fraction" = "frac"),
+                                                                                                                         selected = "all",
+                                                                                                                         inline = TRUE)),
                                                                                                   ),
                                                                                          tags$hr(),
-                                                                                         withSpinner(plotlyOutput("heat_visu", height = "800px"), type = 6)
-                                                                                         ),
-                                                                                tabPanel("Density",
+                                                                                         textOutput("bstw_wsel"),
                                                                                          tags$hr(),
-                                                                                         fluidRow(column(3, selectInput("transfoD_visu", "Choose a data transformation",
-                                                                                                                        choices = c("Log2" = "log2",
-                                                                                                                                    "None" = "none"), selected = "none")),
-                                                                                                  column(3, checkboxInput("area_visu", "Print area of the density curves", TRUE)),
-                                                                                                  column(3, textInput("titD_visu", "Choose a title for your plot (can be NULL)")),
-                                                                                                  column(3, actionButton("seedens_visu", "See density plot", class = "btn-success"))
-                                                                                         ),
-                                                                                         tags$hr(),
-                                                                                         withSpinner(plotOutput("dens_visu", height = "800px"), type = 6),
-                                                                                         downloadButton("down_dens", "Download density plot")
-                                                                                         ),
-                                                                                tabPanel("MDS",
-                                                                                         tags$hr(),
-                                                                                         fluidRow(column(4, selectInput("transfoM_visu", "Choose a data transformation",
-                                                                                                                        choices = c("Log2" = "log2",
-                                                                                                                                    "None" = "none"), selected = "none")),
-                                                                                                  column(4, textInput("titM_visu", "Choose a title for your plot (can be NULL)")),
-                                                                                                  column(4, actionButton("seemds_visu", "See MDS plot", class = "btn-success"))
-                                                                                         ),
-                                                                                         tags$hr(),
-                                                                                         withSpinner(plotOutput("mds_visu", height = "800px"), type = 6),
-                                                                                         downloadButton("down_mds", "Download MDS plot")
-                                                                                         ),
-                                                                                tabPanel("Retention time",
-                                                                                         conditionalPanel(condition = "input.choice_visu == 'base'",
-                                                                                                          tags$hr(),
-                                                                                                          fluidRow(column(4, actionButton("seert_visu", "See RT vs iRT", class = "btn-success"))
-                                                                                                                   ),
-                                                                                                          tags$hr(),
-                                                                                                          withSpinner(plotlyOutput("rt1_visu", height = "800px"), type = 6),
-                                                                                                          withSpinner(plotlyOutput("rt2_visu", height = "800px"), type = 6)
-                                                                                                          ),
-                                                                                         conditionalPanel(condition = "input.choice_visu == 'dat'",
-                                                                                                          h3("You need to import the report file from DIA nn to use this tab.
-                                                                                                              For this, go back to the first tab 'Import your data'"))
-                                                                                         ),
-                                                                                tabPanel("Proteotypic",
-                                                                                         conditionalPanel(condition = "input.choice_visu == 'base'",
-                                                                                                          tags$hr(),
-                                                                                                          fluidRow(column(4, actionButton("seeptyp_visu", "See proteotypic proportion", class = "btn-success"))
-                                                                                                          ),
-                                                                                                          tags$hr(),
-                                                                                                          withSpinner(plotOutput("ptyp1_visu", height = "600px"), type = 6),
-                                                                                                          withSpinner(plotOutput("ptyp2_visu", height = "600px"), type = 6)
-                                                                                         ),
-                                                                                         conditionalPanel(condition = "input.choice_visu == 'dat'",
-                                                                                                          h3("You need to import the report file from DIA nn to use this tab.
-                                                                                                              For this, go back to the first tab 'Import your data'"))
+                                                                                         conditionalPanel(condition = "input.whichplot_wsel == 'all'",
+                                                                                                          withSpinner(plotOutput("hist_wsel", height = "800px"), type = 6),
+                                                                                                          downloadButton("downhist_wsel", "Download plot")),
+                                                                                         conditionalPanel(condition = "input.whichplot_wsel == 'frac'",
+                                                                                                          withSpinner(plotOutput("hist_wsel_frac", height = "800px"), type = 6),
+                                                                                                          downloadButton("downhist_wsel_frac", "Download plot")),
+                                                                                         shinyjs::useShinyjs()
                                                                                          )
-                                                                                )
+                                                                        )
                                                                     )
-                                                                )
-                                                       )
+                                                           )
+                                                  )
                                       )
                              )
                  )
@@ -752,11 +806,15 @@ server <- function(input, output, session){
       x = NULL
     )
     pg <- reactive({
+      withCallingHandlers({
+        shinyjs::html("diag_getseq", "")
+
       df <- Report_data$d
       if(input$protypiconly_pg){
         df <- df[which(df[["Proteotypic"]] != 0), ]
       }
       df <- df %>% dplyr::filter(Q.Value <= input$qv_pg & PG.Q.Value <= input$qvpg_pg & Protein.Q.Value <= input$qvprot_pg & GG.Q.Value <= input$qvgg_pg)
+      n_cond <- length(unique(df$File.Name))
       if(input$wLFQ_pg == "diann"){
         d <- diann_maxlfq(df,
                           group.header="Protein.Group",
@@ -834,6 +892,26 @@ server <- function(input, output, session){
       d$First.Protein.Description <- unique(df[,c("Protein.Group", "First.Protein.Description")])$First.Protein.Description
       d$Genes <- unique(df[,c("Protein.Group", "Genes")])$Genes
       d <- d[,c((nc+1):ncol(d), 1:nc)]
+
+      if(input$iBAQ_pg){
+        if(input$wLFQ_pg == "iq"){
+          d[,5:(n_cond+4)] <- 2**d[,5:(n_cond+4)]
+        }
+        d_seq <- getallseq(pr_id = d$Protein.Group,
+                             spec = input$species_pg)
+
+        d <- get_iBAQ(d, proteinDB = d_seq,
+                      id_name = "Protein.Group",
+                      ecol = 5:(n_cond+4),
+                      peptideLength = input$peplen_pg,
+                      proteaseRegExp = DIAgui:::getProtease(input$enzyme_pg),
+                      log2_transformed = input$wLFQ_pg == "iq")
+      }
+      d},
+      message = function(m) {
+        shinyjs::html(id = "diag_getseq", html = paste(m$message, "<br>", sep = ""), add = FALSE)
+      }
+      )
     })
     observeEvent(input$go_pg, {
       showNotification(paste("Getting the protein group tab using the MaxLFQ algorithm from", input$wLFQ_peplfq, "package"), type = "message")
@@ -1188,6 +1266,97 @@ server <- function(input, output, session){
     output$ptyp2_visu <- renderPlot({
       ptyp_ev$f
     })
+
+
+    ### SELECT BEST WINDOWS
+    shinyFileChoose(input, "replib_wsel", roots = volumes, session = session)
+    output$filepaths2 <- renderPrint({
+      if (is.integer(input$replib_wsel)) {
+        cat("No files have been selected (shinyFileChoose)")
+      } else {
+        parseFilePaths(volumes, input$replib_wsel)
+      }
+    })
+
+    Lib_data <- reactive({
+      if (is.integer(input$replib_wsel)) {
+        return(NULL)
+      }
+      else {
+        File <- parseFilePaths(volumes, input$replib_wsel)
+      }
+      File <- parseFilePaths(volumes, input$replib_wsel)
+      if(is.null(File))
+        return(NULL)
+
+      showNotification("Getting your data, this may take a while.", type = "message")
+      diann_load(File$datapath)
+    })
+    lib_data <- reactiveValues(
+      d = NULL
+    )
+    observe({
+      lib_data$d <- Lib_data()
+    })
+    output$libdata_up <- reactive({
+      return(!is.null(lib_data$d))
+    })
+    outputOptions(output, "libdata_up", suspendWhenHidden = FALSE)
+
+
+    wsel_ev <- reactiveValues(
+      o_h = NULL,
+      o_hf = NULL,
+      n_h = NULL,
+      n_hf = NULL,
+      both = NULL,
+      both_f = NULL
+    )
+    wsel_result <- reactive({
+      withCallingHandlers({
+        shinyjs::html("bstw_wsel", "")
+        get_bestwind(lib_data$d, bins = input$bins_wsel, per_frac = input$perfrac_wsel)
+        },
+      message = function(m) {
+        shinyjs::html(id = "bstw_wsel", html = paste(m$message, "<br>", sep = ""), add = FALSE)
+      }
+      )
+    })
+
+    observeEvent(input$go_wsel, {
+      showNotification("Get best windows for your data", type = "message", duration = 4)
+      res <- wsel_result()
+      wsel_ev$o_h <- res$orig_hist
+      wsel_ev$o_hf <- res$orig_hist_perfrac
+      wsel_ev$n_h <- res$new_hist
+      wsel_ev$n_hf <- res$new_hist_perfrac
+      wsel_ev$both <- ggpubr::ggarrange(res$orig_hist, res$new_hist, ncol = 2, nrow = 1)
+      wsel_ev$both_f <- ggpubr::ggarrange(res$orig_hist_perfrac, res$new_hist_perfrac, ncol = 2, nrow = 1)
+    })
+    output$hist_wsel <- renderPlot({
+      wsel_ev$both
+    })
+    output$hist_wsel_frac <- renderPlot({
+      wsel_ev$both_f
+    })
+    output$downhist_wsel <- downloadHandler(
+      filename = function() {
+        paste0("DistributionWindow_dia_", Sys.Date(), ".png")
+      },
+      content = function(file){
+        ggsave(file, plot = wsel_ev$both, device = "png",
+               width = 12, height = 8)
+      }
+    )
+    output$downhist_wsel_frac <- downloadHandler(
+      filename = function() {
+        paste0("DistributionWindowFraction_dia_", Sys.Date(), ".png")
+      },
+      content = function(file){
+        ggsave(file, plot = wsel_ev$both_f, device = "png",
+               width = 12, height = 8)
+      }
+    )
 }
 
 

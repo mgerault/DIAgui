@@ -12,7 +12,8 @@ diann_maxlfq(
   quantity.header = "Precursor.Normalised",
   margin = -10,
   count_pep = TRUE,
-  only_countsall = FALSE
+  only_countsall = FALSE,
+  Top3 = FALSE
 )
 }
 \arguments{
@@ -25,6 +26,8 @@ diann_maxlfq(
 \item{id.header}{Id column name (protein, gene, ...)}
 
 \item{quantity.header}{Quantity column name}
+
+\item{Top3}{logical; get Top3 absolute quantification}
 
 \item{get_pep}{logical; get peptide count ?}
 

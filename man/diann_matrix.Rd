@@ -8,13 +8,15 @@ diann_matrix(
   x,
   id.header = "Precursor.Id",
   quantity.header = "Precursor.Normalised",
-  proteotypic.only = F,
+  proteotypic.only = FALSE,
   q = 0.01,
   protein.q = 1,
   pg.q = 1,
   gg.q = 1,
   get_pep = FALSE,
-  only_pepall = FALSE
+  only_pepall = FALSE,
+  margin = -10,
+  Top3 = FALSE
 )
 }
 \arguments{
@@ -37,6 +39,8 @@ diann_matrix(
 \item{get_pep}{logical; get peptide count ?}
 
 \item{only_pepall}{logical; should only keep peptide counts all or also peptide counts for each fractions ?}
+
+\item{Top3}{logical; get Top3 absolute quantification}
 }
 \value{
 A dataframe containing the quantities from the id you selected
