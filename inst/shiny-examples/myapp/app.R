@@ -939,6 +939,7 @@ server <- function(input, output, session){
       },
       content = function(file){
         print(input$format_pg)
+        print(file)
         if(input$format_pg == "xlsx"){
           openxlsx::write.xlsx(pg_ev$x, file, rowNames = FALSE)
         }
