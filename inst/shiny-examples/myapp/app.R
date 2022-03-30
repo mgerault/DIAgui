@@ -234,8 +234,15 @@ ui <- fluidPage(
                                                                              column(3, checkboxInput("iBAQ_pg", "Get iBAQ quantification", TRUE))
                                                                              ),
                                                                     conditionalPanel(condition = "input.iBAQ_pg",
-                                                                                     fluidRow(column(4, selectizeInput("species_pg", "Choose a species",
-                                                                                                                       choices = DIAgui::all_species, selected = "HOMO SAPIENS")
+                                                                                     fluidRow(column(4, checkboxInput("fasta_pg", "Import you own FASTA files; if not, search on swissprot.", TRUE),
+                                                                                                     conditionalPanel(condition = "input.fasta_pg",
+                                                                                                                      fileInput("fastafile_pg", "Import your FATSA files", multiple = TRUE),
+                                                                                                                      ),
+                                                                                                     conditionalPanel(condition = "!input.fasta_pg",
+                                                                                                                      selectizeInput("species_pg", "Choose a species",
+                                                                                                                                     choices = DIAgui::all_species,
+                                                                                                                                     selected = "HOMO SAPIENS")
+                                                                                                                      )
                                                                                                      ),
                                                                                               column(4, sliderInput("peplen_pg", "Choose the min and max peptide length",
                                                                                                                     min = 0, max = 100, value = c(5,36), step = 1)
@@ -802,6 +809,23 @@ server <- function(input, output, session){
     )
 
     ### PROTEINS
+    fasta <- visu_data <- reactive({
+      fts <- NULL
+      if(input$fasta_pg){
+        File <- input$fastafile_pg
+        if(is.null(File))
+          return(NULL)
+
+        fts <- File$datapath
+      }
+      else{
+        fts <- NULLL
+      }
+      print(fts)
+      fts
+    })
+
+
     pg_ev <- reactiveValues(
       x = NULL
     )
@@ -897,8 +921,16 @@ server <- function(input, output, session){
         if(input$wLFQ_pg == "iq"){
           d[,5:(n_cond+4)] <- 2**d[,5:(n_cond+4)]
         }
-        d_seq <- getallseq(pr_id = d$Protein.Group,
+        if(input$fasta_pg){
+          d_seq <- getallseq(pr_id = d$Protein.Group,
+                             fasta_file = TRUE,
+                             bank_name = fasta())
+        }
+        else{
+          d_seq <- getallseq(pr_id = d$Protein.Group,
                              spec = input$species_pg)
+        }
+
 
         d <- get_iBAQ(d, proteinDB = d_seq,
                       id_name = "Protein.Group",
@@ -1302,7 +1334,6 @@ server <- function(input, output, session){
       return(!is.null(lib_data$d))
     })
     outputOptions(output, "libdata_up", suspendWhenHidden = FALSE)
-
 
     wsel_ev <- reactiveValues(
       o_h = NULL,
