@@ -29,6 +29,7 @@ Imports:
     dplyr,
     tidyr,
     purrr,
+    openxlsx,
     plotly,
     ggplot2,
     ggrepel,
