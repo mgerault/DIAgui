@@ -8,5 +8,5 @@ runDIAgui <- function(){
   if(appDir == ""){
     stop("Couldn't find example directory. Try re-installing 'DIAgui'.", call = FALSE)
   }
-  shiny::runApp(appDir, display.mode = "normal")
+  shiny::runApp(appDir, display.mode = "normal", launch.browser = TRUE)
 }
