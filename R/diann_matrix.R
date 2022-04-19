@@ -19,7 +19,7 @@
 #' @export
 
 diann_matrix <- function (x, id.header = "Precursor.Id", quantity.header = "Precursor.Normalised",
-                          proteotypic.only = FALSE, q = 0.01, protein.q = 1, pg.q = 1,
+                          proteotypic.only = FALSE, q = 0.01, protein.q = 1, pg.q = 0.01,
                           gg.q = 1, get_pep = FALSE, only_pepall = FALSE, margin = -10, Top3 = FALSE){
   df <- data.table::as.data.table(x)
   if(proteotypic.only){
@@ -29,17 +29,23 @@ diann_matrix <- function (x, id.header = "Precursor.Id", quantity.header = "Prec
                     protein.q & df[["PG.Q.Value"]] <= pg.q & df[["GG.Q.Value"]] <=
                     gg.q),]
 
-  df <- unique(dft[, c("File.Name", id.header, quantity.header), with = FALSE])
+  info <- c("Protein.Group", "Protein.Names", "Genes")
+  info <- info[!(info %in% id.header)]
+  dft$add_info <- apply(dft[,..info], 1, function(x) paste(x, collapse = " "))
 
+  df <- unique(dft[, c("File.Name", id.header, quantity.header, "add_info"), with = FALSE]) # should remove unique since it will be handled
   is_duplicated = any(duplicated(paste0(df[["File.Name"]],
                                         ":", df[[id.header]])))
   if (is_duplicated) {
     warning("Multiple quantities per id: the maximum of these will be calculated")
     out <- pivot_aggregate(df, "File.Name", id.header, quantity.header)
+    out <- tidyr::separate(out, add_info, into = info, sep = " ")
   }
   else {
     out <- pivot(df, "File.Name", id.header, quantity.header)
+    out <- tidyr::separate(out, add_info, into = info, sep = " ")
   }
+  dft$add_info <- NULL
   if(Top3 & id.header == "Genes"){
     x <- unique(dft[which(dft[["Genes"]] != ""), c("File.Name",
                                                    "Genes", "Precursor.Id", "Precursor.Normalised"), with = FALSE])
@@ -89,15 +95,12 @@ diann_matrix <- function (x, id.header = "Precursor.Id", quantity.header = "Prec
     })
     p = names(top3_res)
     top3_res <- Reduce(rbind, top3_res)
-    rownames(top3_res) <- p
-    top3_res <- top3_res[order(rownames(top3_res)),]
     colnames(top3_res) <- paste0("Top3_", colnames(top3_res))
+    top3_res[[id.header]] <- p
+    top3_res <- top3_res[order(top3_res[[id.header]]),]
     top3_res <- exp(top3_res)
 
-    out <- as.data.frame(out)
-    out <- merge(out, top3_res, by="row.names")
-    rownames(out) <- out$Row.names
-    out$Row.names <- NULL
+    out <- merge(out, top3_res, by=id.header)
   }
   if(get_pep){
     x <- dft[,c("File.Name", id.header, "Genes.MaxLFQ.Unique", "Precursor.Id"), with = FALSE]
@@ -119,16 +122,13 @@ diann_matrix <- function (x, id.header = "Precursor.Id", quantity.header = "Prec
     pep[[id.header]] <- NULL
     pep <- as.data.frame(apply(pep, 2, as.numeric))
     pep$peptides_counts_all <- apply(pep, 1, max)
-    rownames(pep) <- g
+    pep[[id.header]] <- g
 
     if(only_pepall){
       pep <- pep[,1, drop = FALSE]
     }
 
-    out <- as.data.frame(out)
-    out <- merge(out, pep, by="row.names")
-    rownames(out) <- out$Row.names
-    out$Row.names <- NULL
+    out <- merge(out, pep, by=id.header)
   }
 
   return(out)
@@ -137,48 +137,28 @@ diann_matrix <- function (x, id.header = "Precursor.Id", quantity.header = "Prec
 
 ### interns functions from diann-rpackage from vdemichev
 
-pivot <- function (df, sample.header, id.header, quantity.header){
-  x <- data.table::melt.data.table(df, id.vars = c(sample.header, id.header),
+pivot_aggregate <- function (df, sample.header, id.header, quantity.header){
+  x <- data.table::melt.data.table(df, id.vars = c(sample.header, id.header, "add_info"),
                                    measure.vars = c(quantity.header))
   x$value[which(x$value == 0)] <- NA
-  piv <- as.data.frame(data.table::dcast.data.table(x, as.formula(paste0(id.header,
-                                                                         "~", sample.header)),
-                                                    value.var = "value"))
-  rownames(piv) <- piv[[1]]
-  piv[[1]] <- NULL
-  if(ncol(piv) == 1){
-    piv$V <- 1:nrow(piv)
-    piv <- piv[order(rownames(piv)), ]
-    piv$V <- NULL
-  }
-  else{
-    piv <- piv[order(rownames(piv)), ]
-  }
-  as.matrix(piv)
+  piv <- x %>% dplyr::group_by(!!dplyr::sym(sample.header), !!dplyr::sym(id.header)) %>%
+    dplyr::summarise("results" = max(value, na.rm = TRUE),
+              "add_info" = add_info[which(value == max(value, na.rm = TRUE))])
+  piv <- tidyr::spread(piv, !!dplyr::sym(sample.header), results)
+  piv <- piv[order(piv[[id.header]]),]
+
+  return(piv)
 }
 
-pivot_aggregate <- function (df, sample.header, id.header, quantity.header){
-  x <- data.table::melt.data.table(df, id.vars = c(sample.header, id.header),
+pivot <- function (df, sample.header, id.header, quantity.header){
+  x <- data.table::melt.data.table(df, id.vars = c(sample.header, id.header, "add_info"),
                                    measure.vars = c(quantity.header))
   x$value[which(x$value == 0)] <- NA
-  piv <- as.data.frame(data.table::dcast.data.table(x, as.formula(paste0(id.header,
-                                                                         "~", sample.header)),
-                                                    value.var = "value",
-                                                    fun.aggregate = function(x) max(x,
-                                                                                    na.rm = TRUE)))
-  rownames(piv) <- piv[[1]]
-  piv[[1]] <- NULL
-  if(ncol(piv) == 1){
-    piv$V <- 1:nrow(piv)
-    piv <- piv[order(rownames(piv)), ]
-    piv$V <- NULL
-  }
-  else{
-    piv <- piv[order(rownames(piv)), ]
-  }
-  piv = as.matrix(piv)
-  piv[is.infinite(piv)] <- NA
-  piv
+  x$variable <- NULL
+  piv <- tidyr::spread(x, !!dplyr::sym(sample.header), value)
+  piv <- piv[order(piv[[id.header]]),]
+
+  return(piv)
 }
 
 
