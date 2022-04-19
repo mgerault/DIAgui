@@ -617,19 +617,6 @@ server <- function(input, output, session){
                         protein.q = input$qvprot_prec,
                         pg.q = input$qvpg_prec,
                         gg.q = input$qvgg_prec)
-      d <- as.data.frame(d)
-      nc <- ncol(d)
-      d$Precursor.Id <- rownames(d)
-      d <- d[order(d$Precursor.Id),]
-      rownames(d) <- 1:nrow(d)
-      df <- df[df$Q.Value <= input$qv_prec & df$PG.Q.Value <= input$qvpg_prec & df$GG.Q.Value <= input$qvgg_prec & df$PG.Q.Value <= input$qvpg_prec,]
-      df <- df[(df$Precursor.Id %in% d$Precursor.Id),]
-      df <- df[order(df$Precursor.Id),]
-      d$Precursor.Charge <- unique(df[,c("Precursor.Id", "Precursor.Charge")])$Precursor.Charge
-      d$Stripped.Sequence <- unique(df[,c("Precursor.Id", "Stripped.Sequence")])$Stripped.Sequence
-      d$Modified.Sequence <- unique(df[,c("Precursor.Id", "Modified.Sequence")])$Modified.Sequence
-
-      d <- d[,c((nc+1):ncol(d), 1:nc)]
     })
     observeEvent(input$go_prec, {
       showNotification("Getting the precursors tab", type = "message", duration = 2)
@@ -681,18 +668,6 @@ server <- function(input, output, session){
                         protein.q = input$qvprot_pep,
                         pg.q = input$qvpg_pep,
                         gg.q = input$qvgg_pep)
-      d <- as.data.frame(d)
-      nc <- ncol(d)
-      d$Stripped.Sequence <- rownames(d)
-      d <- d[order(d$Stripped.Sequence),]
-      rownames(d) <- 1:nrow(d)
-      df <- df[df$Q.Value <= input$qv_pep & df$PG.Q.Value <= input$qvpg_pep & df$GG.Q.Value <= input$qvgg_pep & df$PG.Q.Value <= input$qvpg_pep,]
-      df <- df[(df$Stripped.Sequence %in% d$Stripped.Sequence),]
-      df <- df[order(df$Stripped.Sequence),]
-      m <- unique(df[,c("Stripped.Sequence", "Modified.Sequence")])
-      d$Modified.Sequence <- m[!duplicated(m$Stripped.Sequence),]$Modified.Sequence
-      d <- d[,c((nc+1):ncol(d), 1:nc)]
-
     })
     observeEvent(input$go_pep, {
       showNotification("Getting the peptides tab", type = "message", duration = 2)
@@ -762,13 +737,15 @@ server <- function(input, output, session){
         d <- as.data.frame(d)
       }
       nc <- ncol(d)
-      d$Stripped.Sequence <- rownames(d)
-      d <- d[order(d$Stripped.Sequence),]
-      rownames(d) <- 1:nrow(d)
-      df <- df[(df$Stripped.Sequence %in% d$Stripped.Sequence),]
+      d <- d[order(rownames(d)),]
+
+      df <- df[(df$Stripped.Sequence %in% rownames(d)),]
       df <- df[order(df$Stripped.Sequence),]
-      m <- unique(df[,c("Stripped.Sequence", "Modified.Sequence")])
-      d$Modified.Sequence <- m[!duplicated(m$Stripped.Sequence),]$Modified.Sequence
+      m <- unique(df[,c("Stripped.Sequence", "Protein.Group", "Protein.Names", "Genes")])
+      m <- m[order(m$Stripped.Sequence),]
+
+      d <- cbind(d,m)
+      rownames(d) <- 1:nrow(d)
       d <- d[,c((nc+1):ncol(d), 1:nc)]
     })
     observeEvent(input$go_peplfq, {
@@ -998,11 +975,6 @@ server <- function(input, output, session){
                    gg.q = input$qvgg_gg,
                    get_pep = TRUE, only_pepall = input$onlycountall_gg,
                    Top3 = input$Top3_gg)
-      nc <- ncol(d)
-      d$Genes <- rownames(d)
-      rownames(d) <- 1:nrow(d)
-      d <- d[,c((nc+1):ncol(d), 1:nc)]
-      d <- d[order(d$Genes),]
     })
     observeEvent(input$go_gg, {
       showNotification("Getting the unique genes tab", type = "message", duration = 2)
