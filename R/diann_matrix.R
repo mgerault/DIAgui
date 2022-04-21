@@ -29,9 +29,13 @@ diann_matrix <- function (x, id.header = "Precursor.Id", quantity.header = "Prec
                     protein.q & df[["PG.Q.Value"]] <= pg.q & df[["GG.Q.Value"]] <=
                     gg.q),]
 
-  info <- c("Protein.Group", "Protein.Names", "Genes")
+  info <- c()
+  if(id.header == "Precursor.Id" | id.header == "Stripped.Sequence" | id.header == "Modified.Sequence"){
+    info <- c("Stripped.Sequence", "Modified.Sequence")
+  }
+  info <- c(info, "Protein.Group", "Protein.Names", "Genes")
   info <- info[!(info %in% id.header)]
-  dft$add_info <- apply(dft[,..info], 1, function(x) paste(x, collapse = " "))
+  dft$add_info <- apply(as.data.frame(dft)[,info], 1, function(x) paste(x, collapse = " "))
 
   df <- unique(dft[, c("File.Name", id.header, quantity.header, "add_info"), with = FALSE]) # should remove unique since it will be handled
   is_duplicated = any(duplicated(paste0(df[["File.Name"]],
@@ -96,9 +100,9 @@ diann_matrix <- function (x, id.header = "Precursor.Id", quantity.header = "Prec
     p = names(top3_res)
     top3_res <- Reduce(rbind, top3_res)
     colnames(top3_res) <- paste0("Top3_", colnames(top3_res))
+    top3_res <- exp(top3_res)
     top3_res[[id.header]] <- p
     top3_res <- top3_res[order(top3_res[[id.header]]),]
-    top3_res <- exp(top3_res)
 
     out <- merge(out, top3_res, by=id.header)
   }
@@ -125,7 +129,7 @@ diann_matrix <- function (x, id.header = "Precursor.Id", quantity.header = "Prec
     pep[[id.header]] <- g
 
     if(only_pepall){
-      pep <- pep[,1, drop = FALSE]
+      pep <- pep[,c(1, ncol(pep))]
     }
 
     out <- merge(out, pep, by=id.header)
@@ -160,5 +164,6 @@ pivot <- function (df, sample.header, id.header, quantity.header){
 
   return(piv)
 }
+
 
 
