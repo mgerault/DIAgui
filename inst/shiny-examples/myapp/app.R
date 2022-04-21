@@ -134,6 +134,7 @@ ui <- fluidPage(
                                                                     checkboxInput("protypiconly_prec", "Proteotypic only", TRUE),
                                                                     actionButton("go_prec", "Start calculation", class = "btn-success"),
                                                                     tags$hr(),
+                                                                    textOutput("info_prec"),
                                                                     conditionalPanel(condition = "output.precursor_up",
                                                                                      DT::dataTableOutput("res_prec"),
                                                                                      tags$hr(),
@@ -161,6 +162,7 @@ ui <- fluidPage(
                                                                     checkboxInput("protypiconly_pep", "Proteotypic only", TRUE),
                                                                     actionButton("go_pep", "Start calculation", class = "btn-success"),
                                                                     tags$hr(),
+                                                                    textOutput("info_pep"),
                                                                     conditionalPanel(condition = "output.peptide_up",
                                                                                      DT::dataTableOutput("res_pep"),
                                                                                      tags$hr(),
@@ -191,6 +193,7 @@ ui <- fluidPage(
                                                                     checkboxInput("protypiconly_peplfq", "Proteotypic only", TRUE),
                                                                     actionButton("go_peplfq", "Start calculation", class = "btn-success"),
                                                                     tags$hr(),
+                                                                    textOutput("info_peplfq"),
                                                                     conditionalPanel(condition = "output.peptideLFQ_up",
                                                                                      DT::dataTableOutput("res_peplfq"),
                                                                                      tags$hr(),
@@ -256,6 +259,7 @@ ui <- fluidPage(
                                                                                      ),
                                                                     actionButton("go_pg", "Start calculation", class = "btn-success"),
                                                                     tags$hr(),
+                                                                    textOutput("info_pg"),
                                                                     conditionalPanel(condition = "output.proteins_up",
                                                                                      DT::dataTableOutput("res_pg"),
                                                                                      tags$hr(),
@@ -287,6 +291,7 @@ ui <- fluidPage(
                                                                              ),
                                                                     actionButton("go_gg", "Start calculation", class = "btn-success"),
                                                                     tags$hr(),
+                                                                    textOutput("info_gg"),
                                                                     conditionalPanel(condition = "output.genes_up",
                                                                                      DT::dataTableOutput("res_gg"),
                                                                                      tags$hr(),
@@ -618,14 +623,25 @@ server <- function(input, output, session){
                         pg.q = input$qvpg_prec,
                         gg.q = input$qvgg_prec)
     })
+
     observeEvent(input$go_prec, {
-      showNotification("Getting the precursors tab", type = "message", duration = 2)
-      precu_ev$x <- precu()
+      withCallingHandlers({
+        shinyjs::html("info_prec", "")
+        message("Calculation...")
+        showNotification("Getting the precursors tab", type = "message", duration = 2)
+        precu_ev$x <- precu()
+        message("Done !")
+      },
+      message = function(m) {
+        shinyjs::html(id = "info_prec", html = paste(m$message, "<br>", sep = ""), add = FALSE)
+      }
+      )
     })
     output$precursor_up <- reactive({
       return(!is.null(precu_ev$x))
     })
     outputOptions(output, "precursor_up", suspendWhenHidden = FALSE)
+
 
     output$res_prec <- DT::renderDataTable({
       DT::datatable(precu_ev$x,
@@ -670,8 +686,18 @@ server <- function(input, output, session){
                         gg.q = input$qvgg_pep)
     })
     observeEvent(input$go_pep, {
-      showNotification("Getting the peptides tab", type = "message", duration = 2)
-      pep_ev$x <- pep()
+      withCallingHandlers({
+        shinyjs::html("info_pep", "")
+        message("Calculation...")
+        showNotification("Getting the peptides tab", type = "message", duration = 2)
+        pep_ev$x <- pep()
+        message("Done !")
+      },
+      message = function(m) {
+        shinyjs::html(id = "info_pep", html = paste(m$message, "<br>", sep = ""), add = FALSE)
+      }
+      )
+
     })
     output$peptide_up <- reactive({
       return(!is.null(pep_ev$x))
@@ -718,7 +744,7 @@ server <- function(input, output, session){
       df <- df %>% dplyr::filter(Q.Value <= input$qv_peplfq & PG.Q.Value <= input$qvpg_peplfq & Protein.Q.Value <= input$qvprot_peplfq & GG.Q.Value <= input$qvgg_peplfq)
       if(input$wLFQ_peplfq == "diann"){
         d <- diann_maxlfq(df,
-                          group.header="Stripped.Sequence",
+                          group.header = "Modified.Sequence",
                           id.header = "Precursor.Id",
                           quantity.header = "Precursor.Normalised",
                           count_pep = FALSE
@@ -727,7 +753,7 @@ server <- function(input, output, session){
       else if(input$wLFQ_peplfq == "iq"){
         d <- iq::preprocess(df,
                             intensity_col = "Precursor.Normalised",
-                            primary_id = "Stripped.Sequence",
+                            primary_id = "Modified.Sequence",
                             sample_id  = "File.Name",
                             secondary_id = "Precursor.Id",
                             median_normalization = FALSE,
@@ -739,9 +765,9 @@ server <- function(input, output, session){
       nc <- ncol(d)
       d <- d[order(rownames(d)),]
 
-      df <- df[(df$Stripped.Sequence %in% rownames(d)),]
-      df <- df[order(df$Stripped.Sequence),]
-      m <- unique(df[,c("Stripped.Sequence", "Protein.Group", "Protein.Names", "Genes")])
+      df <- df[(df$Modified.Sequence %in% rownames(d)),]
+      df <- df[order(df$Modified.Sequence),]
+      m <- unique(df[,c("Modified.Sequence", "Stripped.Sequence", "Protein.Group", "Protein.Names", "Genes")])
       m <- m[order(m$Stripped.Sequence),]
 
       d <- cbind(d,m)
@@ -749,8 +775,18 @@ server <- function(input, output, session){
       d <- d[,c((nc+1):ncol(d), 1:nc)]
     })
     observeEvent(input$go_peplfq, {
-      showNotification(paste("Getting the peptides tab using the MaxLFQ algorithm from", input$wLFQ_peplfq, "package"), type = "message")
-      peplfq_ev$x <- peplfq()
+      withCallingHandlers({
+        shinyjs::html("info_peplfq", "")
+        message("Calculation...")
+        showNotification(paste("Getting the peptides tab using the MaxLFQ algorithm from", input$wLFQ_peplfq, "package"), type = "message")
+        peplfq_ev$x <- peplfq()
+        message("Done !")
+      },
+      message = function(m) {
+        shinyjs::html(id = "info_peplfq", html = paste(m$message, "<br>", sep = ""), add = FALSE)
+      }
+      )
+
     })
     output$peptideLFQ_up <- reactive({
       return(!is.null(peplfq_ev$x))
@@ -923,8 +959,17 @@ server <- function(input, output, session){
       )
     })
     observeEvent(input$go_pg, {
-      showNotification(paste("Getting the protein group tab using the MaxLFQ algorithm from", input$wLFQ_peplfq, "package"), type = "message")
-      pg_ev$x <- pg()
+      withCallingHandlers({
+        shinyjs::html("info_pg", "")
+        message("Calculation...")
+        showNotification(paste("Getting the protein group tab using the MaxLFQ algorithm from", input$wLFQ_peplfq, "package"), type = "message")
+        pg_ev$x <- pg()
+        message("Done !")
+      },
+      message = function(m) {
+        shinyjs::html(id = "info_pg", html = paste(m$message, "<br>", sep = ""), add = FALSE)
+      }
+      )
     })
     output$proteins_up <- reactive({
       return(!is.null(pg_ev$x))
@@ -977,8 +1022,17 @@ server <- function(input, output, session){
                    Top3 = input$Top3_gg)
     })
     observeEvent(input$go_gg, {
+      withCallingHandlers({
+        shinyjs::html("info_gg", "")
+        message("Calculation...")
       showNotification("Getting the unique genes tab", type = "message", duration = 2)
       gg_ev$x <- gg()
+      message("Done !")
+      },
+      message = function(m) {
+        shinyjs::html(id = "info_gg", html = paste(m$message, "<br>", sep = ""), add = FALSE)
+      }
+      )
     })
     output$genes_up <- reactive({
       return(!is.null(gg_ev$x))
