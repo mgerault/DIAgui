@@ -159,7 +159,11 @@ ui <- fluidPage(
                                                                              column(3, numericInput("qvgg_pep", "Choose the gene-groupe q-value to filter the peptides",
                                                                                                     min = 0, max = 1, step = 0.01, value = 1))
                                                                              ),
-                                                                    checkboxInput("protypiconly_pep", "Proteotypic only", TRUE),
+                                                                    fluidRow(column(3, checkboxInput("protypiconly_pep", "Proteotypic only", TRUE)),
+                                                                             column(3, selectInput("centercol_pep", "Choose identifier to quantify",
+                                                                                                   choices = c("Modified.Sequence", "Stripped.Sequence"),
+                                                                                                   selected = "Stripped.Sequence"))
+                                                                             ),
                                                                     actionButton("go_pep", "Start calculation", class = "btn-success"),
                                                                     tags$hr(),
                                                                     textOutput("info_pep"),
@@ -190,7 +194,11 @@ ui <- fluidPage(
                                                                                              "Use fast MaxLFQ from iq package (log2 transformed)" = "iq"),
                                                                                  selected = "diann",
                                                                                  inline = TRUE),
-                                                                    checkboxInput("protypiconly_peplfq", "Proteotypic only", TRUE),
+                                                                    fluidRow(column(3, checkboxInput("protypiconly_peplfq", "Proteotypic only", TRUE)),
+                                                                             column(3, selectInput("centercol_peplfq", "Choose identifier to quantify",
+                                                                                                   choices = c("Modified.Sequence", "Stripped.Sequence"),
+                                                                                                   selected = "Modified.Sequence"))
+                                                                                    ),
                                                                     actionButton("go_peplfq", "Start calculation", class = "btn-success"),
                                                                     tags$hr(),
                                                                     textOutput("info_peplfq"),
@@ -678,7 +686,7 @@ server <- function(input, output, session){
     pep <- reactive({
       df <- Report_data$d
       d <- diann_matrix(df,
-                        id.header="Stripped.Sequence",
+                        id.header = input$centercol_pep,
                         proteotypic.only = input$protypiconly_pep,
                         q = input$qv_pep,
                         protein.q = input$qvprot_pep,
@@ -744,7 +752,7 @@ server <- function(input, output, session){
       df <- df %>% dplyr::filter(Q.Value <= input$qv_peplfq & PG.Q.Value <= input$qvpg_peplfq & Protein.Q.Value <= input$qvprot_peplfq & GG.Q.Value <= input$qvgg_peplfq)
       if(input$wLFQ_peplfq == "diann"){
         d <- diann_maxlfq(df,
-                          group.header = "Modified.Sequence",
+                          group.header = input$centercol_peplfq,
                           id.header = "Precursor.Id",
                           quantity.header = "Precursor.Normalised",
                           count_pep = FALSE
@@ -753,7 +761,7 @@ server <- function(input, output, session){
       else if(input$wLFQ_peplfq == "iq"){
         d <- iq::preprocess(df,
                             intensity_col = "Precursor.Normalised",
-                            primary_id = "Modified.Sequence",
+                            primary_id = input$centercol_peplfq,
                             sample_id  = "File.Name",
                             secondary_id = "Precursor.Id",
                             median_normalization = FALSE,
@@ -775,6 +783,34 @@ server <- function(input, output, session){
       d <- d[,c((nc+1):ncol(d), 1:nc)]
     })
     observeEvent(input$go_peplfq, {
+      if(input$centercol_peplfq == "Stripped.Sequence"){
+        showModal(
+          modalDialog(
+            title = "Using 'Stripped.Sequence' is not advised when using MaxLFQ;
+                     number of rows may not match so it might crash.
+                     If so, use 'Modified.Sequence' instead.",
+            footer = tagList(actionButton("confirm_peplfq", "Confirm"),
+                             modalButton("Cancel"))
+          )
+        )
+      }
+      else{
+        withCallingHandlers({
+          shinyjs::html("info_peplfq", "")
+          message("Calculation...")
+          showNotification(paste("Getting the peptides tab using the MaxLFQ algorithm from", input$wLFQ_peplfq, "package"), type = "message")
+          peplfq_ev$x <- peplfq()
+          message("Done !")
+        },
+        message = function(m) {
+          shinyjs::html(id = "info_peplfq", html = paste(m$message, "<br>", sep = ""), add = FALSE)
+        }
+        )
+      }
+    })
+    observeEvent(input$confirm_peplfq, {
+      removeModal()
+
       withCallingHandlers({
         shinyjs::html("info_peplfq", "")
         message("Calculation...")
