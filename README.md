@@ -4,7 +4,7 @@ a function that does the complete workflow and saves all results in a directory 
 The process is as follow : filtering data according q.values, applying MaxLFQ algorithm for quantification, getting some other informations, plot some graphs to check data quality.
 
 This package is based on [diann-rpackage](https://github.com/vdemichev/diann-rpackage) from Vadim Demichev. The c++ source code is exactly the same as the one from V.Demichev,
-it is used for MaxLFQ algorithm. Since [iq](https://cran.r-project.org/web/packages/iq/index.html) r package is way faster, this code will be removed.
+it is used for MaxLFQ algorithm. You can also use [iq](https://cran.r-project.org/web/packages/iq/index.html) r package which is way faster to run MaxLFQ algorithm.
 
 # How to install and use DIAgui ?
 First, go to Rstudio. Before installing DIAgui, you will need to install [limma](https://bioconductor.org/packages/release/bioc/html/limma.html)
