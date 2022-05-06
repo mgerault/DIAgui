@@ -1,4 +1,5 @@
 Package: DIAgui
+Version: 1.2.0.9000
 Type: Package
 Title: A shiny app for processing DIAnn output in proteomics
 Version: 0.1.0
