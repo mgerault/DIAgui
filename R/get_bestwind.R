@@ -29,7 +29,7 @@ get_bestwind <- function(data, bins = 25, per_frac = FALSE){
     }
   }
   data <- as.data.frame(data)
-  data <- data %>% dplyr::select(FileName, ProductMz)
+  data <- data %>% dplyr::select(File.Name, ProductMz)
 
   orig_hist <- ggplot2::ggplot(data, ggplot2::aes(x=ProductMz)) +
     ggplot2::geom_histogram(color="black", fill="white", bins = bins)
@@ -41,10 +41,10 @@ get_bestwind <- function(data, bins = 25, per_frac = FALSE){
 
   if(per_frac){
     best_wind <- list()
-    frac = unique(data$FileName)
+    frac = unique(data$File.Name)
     ### first get best windows for each fraction
     for(i in frac){
-      data_bis <- data %>% dplyr::select(FileName, ProductMz) %>%
+      data_bis <- data %>% dplyr::select(File.Name, ProductMz) %>%
         dplyr::filter(FileName == i)
 
       n = nrow(data_bis)
