@@ -35,7 +35,7 @@ get_bestwind <- function(data, bins = 25, per_frac = FALSE){
     ggplot2::geom_histogram(color="black", fill="white", bins = bins)
   orig_hist_frac <- ggplot2::ggplot(data, ggplot2::aes(x=ProductMz)) +
     ggplot2::geom_histogram(color="black", fill="white", bins = bins) +
-    ggplot2::facet_wrap(~FileName)
+    ggplot2::facet_wrap(~File.Name)
 
   data <- data[order(data$ProductMz),]
 
