@@ -13,7 +13,7 @@ library(iq)
 
 
 #increase the max request size for uploading files
-options(shiny.maxRequestSize = 5000*1024^2)
+options(shiny.maxRequestSize = 10000*1024^2)
 #set options for the spinner when things are loading
 options(spinner.color = "#3D7AEC", spinner.color.background = "000000", spinner.size = 2)
 
