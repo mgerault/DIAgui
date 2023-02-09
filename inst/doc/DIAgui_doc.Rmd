@@ -222,14 +222,14 @@ genes <- diann_matrix(report,
 head(genes)  # check the results
 ```
 
+
+As you can see, it can be a lot of writing. That is why we also provide a function to all this step at once, using the iq package to be faster to compute the MaxLFQ algorithm. It also plot a density plot, an MDS plot and the retention time vs the i-retention time. The results are save in one folder and the data can be saved as an xlsx, txt or csv file.
+For example, if you want to extract the protein.group quantification and the iBAQ from your file:
 ```{r, eval=FALSE}
 report_process("small_report.tsv", # needs to be path to a report file
                get_iBAQ = TRUE, get_Top3 = FALSE,
                species = "SACCHAROMYCES CEREVISIAE")
 ```
-
-As you can see, it can be a lot of writing. That is why we also provide a function to all this step at once, using the iq package to be faster to compute the MaxLFQ algorithm. It also plot a density plot, an MDS plot and the retention time vs the i-retention time. The results are save in one folder and the data can be saved as an xlsx, txt or csv file.
-For example, if you want to extract the protein.group quantification and the iBAQ from your file:
 
 
 Once you obtained the data you wanted, you can save it as csv, txt or xlsx file. You can always use these files in the shiny app to visualize your data.
