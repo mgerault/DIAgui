@@ -55,7 +55,9 @@ diann_matrix <- function (x, id.header = "Precursor.Id", quantity.header = "Prec
   is_duplicated = any(duplicated(paste0(df[["File.Name"]],
                                         ":", df[[id.header]])))
   if (is_duplicated) {
-    warning("Multiple quantities per id: the maximum of these will be calculated")
+    warning(paste("Multiple quantities per id: the", 
+                  ifelse(method == "max", "maximum", "sum"),
+                  "of these will be calculated"))
     out <- pivot_aggregate(df, "File.Name", id.header, quantity.header, method = method)
     out <- tidyr::separate(out, add_info, into = info, sep = " ")
   }
@@ -76,7 +78,9 @@ diann_matrix <- function (x, id.header = "Precursor.Id", quantity.header = "Prec
     is_duplicated = any(duplicated(paste0(x[["File.Name"]],
                                           ":", x[["Genes"]], ":", x[["Precursor.Id"]])))
     if (is_duplicated)
-      warning("Multiple quantities per id: the maximum of these will be calculated")
+      warning(paste("Multiple quantities per id: the", 
+                  ifelse(method == "max", "maximum", "sum"),
+                  "of these will be calculated"))
     x[["Precursor.Quantity"]][which(x[["Precursor.Quantity"]] == 0)] <- NA
     x[["Precursor.Quantity"]] <- log(x[["Precursor.Quantity"]])
     x[["Precursor.Quantity"]][which(x[["Precursor.Quantity"]] <= margin)] <- NA
