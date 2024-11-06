@@ -43,6 +43,11 @@ diann_matrix <- function (x, id.header = "Precursor.Id", quantity.header = "Prec
     dft <- dft[which(dft[["Quantity.Quality"]] >= quality),]
   }
 
+  if(nrow(dft) == 0){
+    message("The filters you selected returned an empty data.frame. Try to be less stringent.")
+    return()
+  }
+
   info <- c()
   if(id.header == "Precursor.Id" | id.header == "Stripped.Sequence" | id.header == "Modified.Sequence"){
     info <- c("Stripped.Sequence", "Modified.Sequence")
@@ -55,9 +60,7 @@ diann_matrix <- function (x, id.header = "Precursor.Id", quantity.header = "Prec
   is_duplicated = any(duplicated(paste0(df[["File.Name"]],
                                         ":", df[[id.header]])))
   if (is_duplicated) {
-    warning(paste("Multiple quantities per id: the", 
-                  ifelse(method == "max", "maximum", "sum"),
-                  "of these will be calculated"))
+    warning("Multiple quantities per id: the maximum of these will be calculated")
     out <- pivot_aggregate(df, "File.Name", id.header, quantity.header, method = method)
     out <- tidyr::separate(out, add_info, into = info, sep = " ")
   }
@@ -78,9 +81,7 @@ diann_matrix <- function (x, id.header = "Precursor.Id", quantity.header = "Prec
     is_duplicated = any(duplicated(paste0(x[["File.Name"]],
                                           ":", x[["Genes"]], ":", x[["Precursor.Id"]])))
     if (is_duplicated)
-      warning(paste("Multiple quantities per id: the", 
-                  ifelse(method == "max", "maximum", "sum"),
-                  "of these will be calculated"))
+      warning("Multiple quantities per id: the maximum of these will be calculated")
     x[["Precursor.Quantity"]][which(x[["Precursor.Quantity"]] == 0)] <- NA
     x[["Precursor.Quantity"]] <- log(x[["Precursor.Quantity"]])
     x[["Precursor.Quantity"]][which(x[["Precursor.Quantity"]] <= margin)] <- NA
